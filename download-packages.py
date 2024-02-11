@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 from tqdm import tqdm
 import os
+import util
 
 # mirrors
 mirror = ['http://ftp.iinet.net.au/pub/archlinux/core/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/multilib/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/extra/os/x86_64/']
@@ -47,9 +48,9 @@ print(str(len(pkgs)) +  ' local packages\n')
 mirrorpkgs = {}
 mirrordb = []
 print('scrape mirrors...')
+
 for url in mirror:
 	response = requests.get(url)
-	# parse html
 	soup = BeautifulSoup(response.content, 'html.parser')
 
 	# Find all  tags with href attribute
@@ -57,21 +58,16 @@ for url in mirror:
 	    href = link['href']
 	    if href.endswith('.sig'):
 	    	continue
-	    
-	    href = href.strip('.').strip('/')
-	    href = href.replace('%3A', ':').replace('%253A', ':')
-	    # get arch and ext
-	    archext = re.sub('.*-', '', href)
-	    # get package name
-	    pkg = re.sub('-\d.*', '', href)
-	    # get version
-	    version = href.replace(archext, '').replace(pkg,'')
-	    version = version[:-1][1:]
-	    mirrorpkgs[pkg] = {'name' : pkg, 'version' : version, 'url' : url +href}
-	    
-	    # get db and sig
+	    	
+	    # get db
 	    if href.endswith('.db'):
 	    	mirrordb.append(url + href)
+	    	continue
+	    	
+	    p = util.get_package_info(href)
+	    p['url'] = url + href
+	    mirrorpkgs[pkg] = p
+	    
 
 print(str(len(mirrorpkgs)) + ' mirror packages\n')
 

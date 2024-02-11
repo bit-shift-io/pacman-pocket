@@ -1,8 +1,7 @@
 import re
-import sys
 import os
-import json
 from ftplib import FTP
+import util
 
 host = 'office.lan'
 port = 22
@@ -10,61 +9,71 @@ user = 'user'
 password = 'password'
 remote = '/ftp/user/pkgs/archlinux/'
 path = os.getcwd() + '/packages/'
-
-# load filelist
-filelist = []
-with open('filelist.json') as f:
-    filelist = json.load(f)
 	
-# get updated files
-newlist = sorted(next(os.walk(path), (None, None, []))[2])
+# get files
+files = sorted(next(os.walk(path), (None, None, []))[2])
 
-# get list files to delete
-deletecount = 0
-deletelist = []
-for file in newlist:
-	reg = re.sub('-\d.*', '', file)
+# updated packages
+pkgs = {}
+for f in files:
+	if f.endswith('.sig'):
+	    	continue
+	pk = util.get_package_info(f)
+	if pk is None:
+		continue
+	pkgs[pk['name']] = pk
 	
-	for old in filelist:
-		oldreg = re.sub('-\d.*', '', old)
-		
-		if reg == oldreg:
-			deletelist.append(old)
-			deletelist.append(old + '.sig')
-			deletecount += 1
-			break
-			
-#print(deletelist)
-print(str(deletecount) + ' files to remove\n')
+print(str(len(pkgs)) +  ' packages\n')
 
+# connect ftp
 ftp = FTP(host, user, password)
 ftp.cwd(remote)
+ftpfiles = ftp.nlst()
 
-# del old files
+# del old
+print('\ndeleting old packages...')
 delcount = 0
-for file in deletelist:
-	try:
-		ftp.delete(file)
-		print(file + ' -> deleted')
-		delcount += 1
-	except Exception as e:
-		print(file + ' -> doesnt exist or is root')
+for f in ftpfiles:
+	pk = util.get_package_info(f)
+	if pk is None:
+		continue
+		
+	pkg = pk['name']
+	ver = pk['version']
+	
+	# are we related to new files?
+	if pkg not in pkgs:
+		continue
 
+	# delete older versions
+	if ver != pkgs[pkg]['version']:
+		try:
+			ftp.delete(f)
+			ftp.delete(f + '.sig')
+			print(pkg + ' ' + ver)
+			delcount += 1
+		except Exception as e:
+			print(f + ' -> doesnt exist or is root')
 
 # push new files
+print('\nadding new packages...')
 pushcount = 0
-for file in newlist:
-	filepath = path + file
-	
+for f in files:
+	filepath = path + f
+	pk = util.get_package_info(f)
 	try:
 		with open(filepath, 'rb') as openfile:
 			ftp.storbinary(f'STOR {file}', openfile)
-		print(file + ' -> added')
+		if pk is None:
+			print(f)
+		else:
+			print(pk['name'] + ' ' + pk['vetsion'])
 		pushcount += 1
 	except Exception as e:
-		print(file + ' -> exists as root')
+		print(f + ' -> exists as root')
 
 ftp.quit()
 
-print(str(delcount) + ' files removed')
-print(str(pushcount) + ' files added')
+print()
+print(str(delcount) + ' deletions')
+print(str(pushcount) + ' additions')

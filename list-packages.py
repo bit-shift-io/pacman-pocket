@@ -1,12 +1,11 @@
 
 import requests
 from bs4 import BeautifulSoup
-import re
+import util
 
 url = 'http://office.lan:9129/repo/archlinux/'
 
 response = requests.get(url)
-# parse html
 soup = BeautifulSoup(response.content, 'html.parser')
 
 list = []
@@ -15,20 +14,16 @@ for link in soup.find_all('a', href=True):
     href = link['href']
     if href.endswith('.sig'):
     	continue
-    # trim and tidy
-    href = href.strip('.').strip('/')
-    href = href.replace('%3A', ':').replace('%253A', ':')
-    # get arch and ext
-    archext = re.sub('.*-', '', href)
-    # get package name
-    pkg = re.sub('-\d.*', '', href)
-    # get version
-    version = href.replace(archext, '').replace(pkg,'')
-    version = version[:-1][1:]
-    clean = pkg + ' ' + version
-    list.append(clean)
-    print(clean)
+    	
+    pkg = util.get_package_info(href)
+    
+    # db file
+    if pkg == None:
+    	continue
+    
+    list.append(pkg['name'] + ' ' + pkg['version'])
 
 with open("packages.txt", "w") as f:
 	 for line in list:
+	 	print(line)
 	 	f.write('%s\n' % line)
