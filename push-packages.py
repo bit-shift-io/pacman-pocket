@@ -2,12 +2,13 @@ import re
 import os
 from ftplib import FTP
 import util
+import sys
 
 host = 'office.lan'
 port = 22
 user = 'user'
 password = 'password'
-remote = '/ftp/user/pkgs/archlinux/'
+remote = '/archlinux/'
 path = os.getcwd() + '/packages/'
 	
 # get files
@@ -26,9 +27,16 @@ for f in files:
 print(str(len(pkgs)) +  ' packages\n')
 
 # connect ftp
-ftp = FTP(host, user, password)
-ftp.cwd(remote)
-ftpfiles = ftp.nlst()
+ftp = None
+ftpfiles=[]
+try:
+	ftp = FTP(host, user, password)
+	ftp.set_pasv(False)
+	ftp.cwd(remote)
+	ftpfiles = ftp.nlst()
+except Exception as e:
+	print(e)
+	sys.exit()
 
 # del old
 print('\ndeleting old packages...')
@@ -63,14 +71,14 @@ for f in files:
 	pk = util.get_package_info(f)
 	try:
 		with open(filepath, 'rb') as openfile:
-			ftp.storbinary(f'STOR {file}', openfile)
+			ftp.storbinary(f'STOR {f}', openfile)
 		if pk is None:
 			print(f)
 		else:
-			print(pk['name'] + ' ' + pk['vetsion'])
+			print(pk['name'] + ' ' + pk['version'])
 		pushcount += 1
 	except Exception as e:
-		print(f + ' -> exists as root')
+		print(e)
 
 ftp.quit()
 
