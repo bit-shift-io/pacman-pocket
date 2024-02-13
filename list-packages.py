@@ -1,14 +1,21 @@
-
+import sys
 import requests
 from bs4 import BeautifulSoup
 import util
 
 url = 'http://office.lan:9129/repo/archlinux/'
 
-response = requests.get(url)
-soup = BeautifulSoup(response.content, 'html.parser')
+response = None
+try:
+  response = requests.get(url)
+except Exception as e:
+	print(e)
+	sys.exit()
 
+
+soup = BeautifulSoup(response.content, 'html.parser')
 list = []
+
 # Find all  tags with href attribute
 for link in soup.find_all('a', href=True):
     href = link['href']

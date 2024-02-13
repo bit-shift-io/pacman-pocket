@@ -58,14 +58,18 @@ for url in mirror:
 	    href = link['href']
 	    if href.endswith('.sig'):
 	    	continue
-	    	
+		
 	    # get db
 	    if href.endswith('.db'):
 	    	mirrordb.append(url + href)
 	    	continue
-	    	
+		
 	    p = util.get_package_info(href)
+	    if p is None:
+	    	continue
+	    	
 	    p['url'] = url + href
+	    pkg = p['name']
 	    mirrorpkgs[pkg] = p
 	    
 
