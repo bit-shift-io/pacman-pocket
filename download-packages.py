@@ -1,18 +1,15 @@
-
 import requests
 from bs4 import BeautifulSoup
 import re
 from tqdm import tqdm
 import os
 import util
+import sys
 
 # mirrors
 mirror = ['http://ftp.iinet.net.au/pub/archlinux/core/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/multilib/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/extra/os/x86_64/']
 
-# download location
-path = os.getcwd() + '/packages/'
-if not os.path.exists(path):
-	os.makedirs(path)
+path = util.get_download_path()
 
 # if sig exists
 def exists(url):
@@ -35,14 +32,18 @@ def fetch(url):
             f.write(data)
             
             
-# load pkg list
+# load txt files
 pkgs = {}
-with open('packages.txt', 'r') as f:
-    for line in f.read().splitlines():
-    	item = line.split(' ')
-    	pkgs[item[0]] = { 'name' : item[0], 'version' : item[1]}
+files = util.get_files_in_dir(os.getcwd(), '.txt')
+for txtfile in files:
+	with open(txtfile, 'r') as f:
+	    for line in f.read().splitlines():
+	    	item = line.split(' ')
+	    	# todo, lowest or highest vetsion?
+	    	pkgs[item[0]] = { 'name' : item[0], 'version' : item[1]}
 
 print(str(len(pkgs)) +  ' local packages\n')
+
 
 # search mirror
 mirrorpkgs = {}

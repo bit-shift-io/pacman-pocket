@@ -1,18 +1,15 @@
 import re
-import os
 from ftplib import FTP
 import util
 import sys
 
 host = 'office.lan'
-port = 22
 user = 'user'
 password = 'password'
 remote = '/archlinux/'
-path = os.getcwd() + '/packages/'
-	
-# get files
-files = sorted(next(os.walk(path), (None, None, []))[2])
+
+path = util.get_download_path()
+files = util.get_files_in_dir(path)
 
 # updated packages
 pkgs = {}
