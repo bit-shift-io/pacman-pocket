@@ -19,18 +19,24 @@ def exists(url):
 # downloads
 def fetch(url):
     filename = path + re.sub('.*/', '', url)
+    
     with open(filename, 'ab') as f:
         headers = {}
         pos = f.tell()
+        
         if pos:
             headers['Range'] = f'bytes={pos}-'
+            
         response = requests.get(url, headers=headers, stream=True)
         #if pos:
         #    validate_as_you_want_(pos, response)
-        total_size = int(response.headers.get('content-length'))  
-        for data in tqdm(iterable = response.iter_content(chunk_size = 1024), total = total_size//1024, unit = 'KB'):
-            f.write(data)
-            
+        total_size = int(response.headers.get('content-length'))
+        pbar = tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024)
+        
+        for data in response.iter_content(1024):
+        	pbar.update(len(data))
+        	f.write(data)
+        	
             
 # load txt files
 pkgs = {}
