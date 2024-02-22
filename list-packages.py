@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import util
 
-url = 'http://office.lan:9129/repo/archlinux/'
+url = 'http://office.lan:9129/repo/manjaro/'
 
 response = None
 try:

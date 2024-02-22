@@ -7,7 +7,10 @@ import util
 import sys
 
 # mirrors
-mirror = ['http://ftp.iinet.net.au/pub/archlinux/core/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/multilib/os/x86_64/', 'http://ftp.iinet.net.au/pub/archlinux/extra/os/x86_64/']
+mirror = [
+'https://mirror.aarnet.edu.au/pub/manjaro/stable/core/x86_64/', 
+'https://mirror.aarnet.edu.au/pub/manjaro/stable/multilib/x86_64/'
+]
 
 path = util.get_download_path()
 
@@ -20,22 +23,26 @@ def exists(url):
 def fetch(url):
     filename = path + re.sub('.*/', '', url)
     
-    with open(filename, 'ab') as f:
-        headers = {}
-        pos = f.tell()
-        
-        if pos:
-            headers['Range'] = f'bytes={pos}-'
-            
-        response = requests.get(url, headers=headers, stream=True)
-        #if pos:
-        #    validate_as_you_want_(pos, response)
-        total_size = int(response.headers.get('content-length'))
-        pbar = tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024)
-        
-        for data in response.iter_content(1024):
-        	pbar.update(len(data))
-        	f.write(data)
+    try:
+	    with open(filename, 'ab') as f:
+	        headers = {}
+	        pos = f.tell()
+	        
+	        if pos:
+	            headers['Range'] = f'bytes={pos}-'
+	            
+	        response = requests.get(url, headers=headers, stream=True)
+	        #if pos:
+	        #    validate_as_you_want_(pos, response)
+	        total_size = int(response.headers.get('content-length'))
+	        pbar = tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, ascii=' =')
+	        
+	        for data in response.iter_content(1024):
+	        	pbar.update(len(data))
+	        	f.write(data)
+	        
+    except Exception as e:
+	       	print(e)
         	
             
 # load txt files
@@ -59,7 +66,7 @@ print('scrape mirrors...')
 for url in mirror:
 	response = requests.get(url)
 	soup = BeautifulSoup(response.content, 'html.parser')
-
+	print('ok')
 	# Find all  tags with href attribute
 	for link in soup.find_all('a', href=True):
 	    href = link['href']
@@ -79,7 +86,6 @@ for url in mirror:
 	    pkg = p['name']
 	    mirrorpkgs[pkg] = p
 	    
-
 print(str(len(mirrorpkgs)) + ' mirror packages\n')
 
 print('download databases...')
@@ -111,6 +117,7 @@ for pk in pkgs:
 		print(pk)
 		fetch(remote['url'])
 		fetch(remote['url'] + '.sig')
+		print()
 		count += 1
 
 print()

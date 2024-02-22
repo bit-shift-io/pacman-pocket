@@ -6,7 +6,7 @@ import sys
 host = 'office.lan'
 user = 'user'
 password = 'password'
-remote = '/archlinux/'
+remote = '/manjaro/'
 
 path = util.get_download_path()
 files = util.get_files_in_dir(path)
